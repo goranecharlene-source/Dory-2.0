@@ -1153,15 +1153,12 @@ export default function App() {
     setEditingNoteDraft('');
   };
 
-<<<<<<< HEAD
   const saveEditingTaskIfLeavingCard = (event, taskId) => {
     const nextFocused = event.relatedTarget;
     if (nextFocused && event.currentTarget.contains(nextFocused)) return;
     commitEditingTask(taskId);
   };
 
-=======
->>>>>>> 7cbaf355a7f5d684864861d4bbea30746b55c775
   const deleteTask = (id) => {
     const deletedTask = tasks.find((task) => task.id === id);
     if (!deletedTask) return;
@@ -2259,17 +2256,15 @@ export default function App() {
                               </div>
 
                               <div className="mb-2">
-                                {editingTaskId === task.id ? (                                  <div
+                                {editingTaskId === task.id ? (
+                                  <div
                                     className="space-y-3 mb-4"
                                     onBlur={(e) => saveEditingTaskIfLeavingCard(e, task.id)}
                                   >
-                                  <div className="space-y-3 mb-4">
                                     <input
                                       autoFocus
                                       value={editingTaskDraft}
                                       onChange={(e) => setEditingTaskDraft(e.target.value)}
-
-                                      onBlur={() => commitEditingTask(task.id)}
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter' && !e.shiftKey) {
                                           e.preventDefault();
@@ -2284,8 +2279,6 @@ export default function App() {
                                     <textarea
                                       value={editingNoteDraft}
                                       onChange={(e) => setEditingNoteDraft(e.target.value)}
-
-                                      onBlur={() => commitEditingTask(task.id)}
                                       onKeyDown={(e) => {
                                         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                                           commitEditingTask(task.id);
@@ -2318,13 +2311,14 @@ export default function App() {
                                     </div>
                                   </div>
                                 ) : (
-                                  <>
+                                  <React.Fragment>
                                     <h3
                                       onClick={() => startEditingTask(task)}
                                       className={`text-base font-bold leading-tight cursor-pointer mb-3 ${task.category === 'done' ? 'line-through text-slate-400' : darkMode ? 'text-white' : 'text-slate-800'}`}
                                     >
                                       {task.text}
                                     </h3>
+
                                     {task.note ? (
                                       <div
                                         onClick={() => startEditingTask(task)}
@@ -2345,9 +2339,10 @@ export default function App() {
                                         + Ajouter une note
                                       </button>
                                     )}
-                                  </>
+                                  </React.Fragment>
                                 )}
                               </div>
+
                               <div className="flex flex-wrap gap-2 mb-4">
                                 <button
                                   type="button"
