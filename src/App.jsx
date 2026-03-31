@@ -782,6 +782,8 @@ export default function App() {
   const [toasts, setToasts] = useState([]);
   const [avatarError, setAvatarError] = useState(false);
   const [doryPulse, setDoryPulse] = useState(0);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState(null);
+  const [installSupported, setInstallSupported] = useState(false);
 
   const inputRef = useRef(null);
   const undoTimeoutsRef = useRef({});
@@ -1453,7 +1455,44 @@ export default function App() {
     return () => window.clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event) => {
+      event.preventDefault();
+      setDeferredInstallPrompt(event);
+      setInstallSupported(true);
+    };
+
+    const handleAppInstalled = () => {
+      setDeferredInstallPrompt(null);
+      setInstallSupported(false);
+      addToast('Dory a été installée 🎉');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
   const focusedTask = tasks.find((task) => task.id === focusedTaskId) || null;
+
+  const installApp = async () => {
+    if (!deferredInstallPrompt) {
+      addToast("L'installation n'est pas encore disponible sur cet appareil.", 'error');
+      return;
+    }
+
+    deferredInstallPrompt.prompt();
+    const result = await deferredInstallPrompt.userChoice;
+    if (result?.outcome === 'accepted') {
+      addToast('Installation lancée 🚀');
+    }
+    setDeferredInstallPrompt(null);
+    setInstallSupported(false);
+  };
 
   const bestDayStat = useMemo(() => {
     if (!filteredTimesheetEntries.length) {
@@ -1640,6 +1679,15 @@ export default function App() {
             >
               Dory Lab
             </button>
+            {installSupported && (
+              <button
+                onClick={installApp}
+                className="px-4 py-3 rounded-2xl border bg-emerald-600 text-white border-emerald-600 text-[10px] font-brand uppercase tracking-wider"
+              >
+                Installer l'app
+              </button>
+            )}
+
             <button
               onClick={() => setDarkMode((prev) => !prev)}
               className={`p-3 rounded-2xl border ${darkMode ? 'bg-slate-900 border-slate-800 text-yellow-400' : 'bg-white border-slate-200 text-slate-500'}`}
@@ -1648,6 +1696,17 @@ export default function App() {
             </button>
           </div>
         </header>
+
+        {!installSupported && (
+          <section
+            className={`mb-6 p-4 rounded-[1.5rem] border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}
+          >
+            <p className="text-sm font-semibold text-indigo-500">Installation de l'application</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Le bouton d'installation apparaîtra ici quand la version PWA complète sera active et reconnue par le navigateur.
+            </p>
+          </section>
+        )}
 
         <section
           className={`mb-8 p-4 md:p-5 rounded-[2rem] border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}
@@ -1676,13 +1735,13 @@ export default function App() {
           </div>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-            {dorySuggestions.map((suggestion, index) => (
+            {dorySuggestions.slice(0,1).map((suggestion, index) => (
               <div
                 key={`${index}-${suggestion}`}
                 className={`rounded-[1.25rem] border px-4 py-3 ${darkMode ? 'border-slate-800 bg-slate-950/70 text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-700'}`}
               >
                 <p className="text-[10px] font-brand uppercase tracking-[0.16em] text-indigo-500 mb-1">
-                  Conseil personnalisé {index + 1}
+                  Conseil Dory
                 </p>
                 <p className="text-sm leading-relaxed mb-3">{suggestion}</p>
 
@@ -1725,14 +1784,7 @@ export default function App() {
                     </button>
                   )}
 
-                  {activeView !== 'timesheet' && (
-                    <button
-                      onClick={() => setActiveView('timesheet')}
-                      className="text-[10px] px-3 py-1.5 rounded-xl bg-slate-700 text-white font-bold uppercase"
-                    >
-                      Timesheet
-                    </button>
-                  )}
+                  
                 </div>
               </div>
             ))}
